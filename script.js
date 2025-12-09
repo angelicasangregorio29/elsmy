@@ -9,6 +9,8 @@ themeToggle?.addEventListener('click', () => {
 let simInterval = null;
 let isSimulationRunning = false;
 let isRecordingRunning = false;
+let emotionalHistory = [];
+let simStartTime = null;
 
 const hrvEl = document.getElementById('hrv');
 const gsrEl = document.getElementById('gsr');
@@ -99,12 +101,23 @@ function maybeTriggerAlerts(emotion) {
 function startSimulation() {
   if (simInterval) return;
   isSimulationRunning = true;
+  emotionalHistory = [];
+  simStartTime = Date.now();
   logEvent('Simulazione avviata.');
   simInterval = setInterval(() => {
     const sensor = generateSensorData();
     const emotion = estimateEmotion(sensor);
     updateUI(sensor, emotion);
     maybeTriggerAlerts(emotion);
+    
+    // Store emotional state in history
+    emotionalHistory.push({
+      timestamp: Date.now() - simStartTime,
+      emotion: emotion.label,
+      stress: emotion.stress,
+      calm: emotion.calm,
+      joy: emotion.joy
+    });
   }, 1200);
 }
 
@@ -113,7 +126,36 @@ function stopSimulation() {
   clearInterval(simInterval);
   simInterval = null;
   isSimulationRunning = false;
+  
+  // Generate and show final summary
+  if (emotionalHistory.length > 0) {
+    const summary = generateEmotionalSummary();
+    logEvent(`<strong>Riepilogo simulazione:</strong> ${summary}`);
+  }
+  
   logEvent('Simulazione fermata.');
+}
+
+function generateEmotionalSummary() {
+  if (emotionalHistory.length === 0) return 'Nessun dato disponibile.';
+  
+  const avgStress = Math.round(emotionalHistory.reduce((sum, h) => sum + h.stress, 0) / emotionalHistory.length);
+  const avgCalm = Math.round(emotionalHistory.reduce((sum, h) => sum + h.calm, 0) / emotionalHistory.length);
+  const avgJoy = Math.round(emotionalHistory.reduce((sum, h) => sum + h.joy, 0) / emotionalHistory.length);
+  
+  const emotionCounts = {};
+  emotionalHistory.forEach(h => {
+    emotionCounts[h.emotion] = (emotionCounts[h.emotion] || 0) + 1;
+  });
+  
+  const dominantEmotion = Object.keys(emotionCounts).reduce((a, b) =>
+    emotionCounts[a] > emotionCounts[b] ? a : b
+  );
+  
+  const duration = emotionalHistory[emotionalHistory.length - 1].timestamp;
+  const durationFormatted = formatDuration(Math.round(duration / 1000));
+  
+  return `Durata: ${durationFormatted} | Stress: ${avgStress}% | Calma: ${avgCalm}% | Gioia: ${avgJoy}% | Stato dominante: ${dominantEmotion}`;
 }
 
 function updateUnifiedButtonUI() {
