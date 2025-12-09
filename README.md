@@ -1,3 +1,5 @@
+# ELSMY - My Emotional Light Security
+
 Run the demo server (upload endpoint) and frontend
 
 ## 1) Install server dependencies and start server
