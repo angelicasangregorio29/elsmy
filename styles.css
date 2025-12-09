@@ -42,6 +42,23 @@ img { max-width: 100%; }
 .btn-danger { background: #3a0f12; border: 1px solid #ff8c8c; color: #ffd5d5; }
 .btn-ghost { background: transparent; border: 1px solid var(--border); }
 
+.btn-voice {
+  background: #20264a;
+  border: 1px solid var(--accent);
+  color: var(--primary);
+  font-weight: 600;
+}
+.btn-voice.recording {
+  background: var(--danger);
+  color: #fff;
+  animation: pulseRecord 1.2s infinite;
+}
+@keyframes pulseRecord {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 .hero {
   display: grid; grid-template-columns: 1.1fr .9fr; gap: 32px; padding: 48px 20px 32px;
 }

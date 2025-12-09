@@ -158,3 +158,53 @@ journalForm?.addEventListener('submit', (e) => {
     if (usingMouse) document.body.classList.remove('show-focus');
   });
 })();
+
+// --- Registrazione vocale ---
+const recordBtn = document.getElementById('recordVoice');
+let mediaRecorder;
+let audioChunks = [];
+
+async function initRecorder() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) audioChunks.push(event.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      audioChunks = [];
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.controls = true;
+
+      // Mostra nel log eventi
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="time">${new Date().toLocaleTimeString()}</span> Registrazione completata.`;
+      eventLog.prepend(li);
+
+      // Aggiunge player audio
+      eventLog.prepend(audio);
+    };
+  } catch (err) {
+    logEvent('Errore nell\'accesso al microfono: ' + err.message);
+  }
+}
+
+recordBtn?.addEventListener('click', async () => {
+  if (!mediaRecorder) await initRecorder();
+
+  if (mediaRecorder.state === 'inactive') {
+    mediaRecorder.start();
+    recordBtn.classList.add('recording');
+    recordBtn.textContent = '⏹️ Ferma registrazione';
+    logEvent('Registrazione vocale avviata.');
+  } else if (mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    recordBtn.classList.remove('recording');
+    recordBtn.textContent = '🎙️ Registra voce';
+    logEvent('Registrazione vocale fermata.');
+  }
+});
