@@ -7,6 +7,8 @@ themeToggle?.addEventListener('click', () => {
 
 // Stato simulazione
 let simInterval = null;
+let isSimulationRunning = false;
+let isRecordingRunning = false;
 
 const hrvEl = document.getElementById('hrv');
 const gsrEl = document.getElementById('gsr');
@@ -19,8 +21,8 @@ const joyBar = document.getElementById('joyBar');
 const adviceBox = document.getElementById('adviceBox');
 const eventLog = document.getElementById('eventLog');
 
-const startSimBtn = document.getElementById('startSim');
-const stopSimBtn = document.getElementById('stopSim');
+const startSimAndRecordBtn = document.getElementById('startSimAndRecord');
+const stopSimAndRecordBtn = document.getElementById('stopSimAndRecord');
 const safeModeBtn = document.getElementById('safeMode');
 
 function logEvent(message) {
@@ -96,6 +98,7 @@ function maybeTriggerAlerts(emotion) {
 
 function startSimulation() {
   if (simInterval) return;
+  isSimulationRunning = true;
   logEvent('Simulazione avviata.');
   simInterval = setInterval(() => {
     const sensor = generateSensorData();
@@ -109,7 +112,18 @@ function stopSimulation() {
   if (!simInterval) return;
   clearInterval(simInterval);
   simInterval = null;
+  isSimulationRunning = false;
   logEvent('Simulazione fermata.');
+}
+
+function updateUnifiedButtonUI() {
+  if (isSimulationRunning || isRecordingRunning) {
+    startSimAndRecordBtn.style.display = 'none';
+    stopSimAndRecordBtn.style.display = 'inline-flex';
+  } else {
+    startSimAndRecordBtn.style.display = 'inline-flex';
+    stopSimAndRecordBtn.style.display = 'none';
+  }
 }
 
 function enterSafeMode() {
@@ -123,8 +137,47 @@ function enterSafeMode() {
   joyBar.style.width = '40%';
 }
 
-startSimBtn?.addEventListener('click', startSimulation);
-stopSimBtn?.addEventListener('click', stopSimulation);
+startSimAndRecordBtn?.addEventListener('click', async () => {
+  if (!mediaRecorder) await initRecorder();
+  
+  // Avvia simulazione
+  startSimulation();
+  
+  // Avvia registrazione
+  if (mediaRecorder && mediaRecorder.state === 'inactive') {
+    audioChunks = [];
+    mediaRecorder.start();
+    isRecordingRunning = true;
+    recordingStart = Date.now();
+    stopSimAndRecordBtn.classList.add('recording');
+    recordingTimer = setInterval(() => {
+      const elapsed = Math.round((Date.now() - recordingStart) / 1000);
+      stopSimAndRecordBtn.textContent = `⏹️ Ferma (${formatDuration(elapsed)})`;
+    }, 500);
+    logEvent('Simulazione e registrazione vocale avviate.');
+  }
+  
+  updateUnifiedButtonUI();
+});
+
+stopSimAndRecordBtn?.addEventListener('click', () => {
+  // Ferma simulazione
+  stopSimulation();
+  
+  // Ferma registrazione
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    isRecordingRunning = false;
+    stopSimAndRecordBtn.classList.remove('recording');
+    if (recordingTimer) clearInterval(recordingTimer);
+    recordingTimer = null;
+    stopSimAndRecordBtn.textContent = '⏹️ Ferma';
+    logEvent('Simulazione e registrazione fermati.');
+  }
+  
+  updateUnifiedButtonUI();
+});
+
 safeModeBtn?.addEventListener('click', enterSafeMode);
 
 // Journaling
@@ -160,7 +213,6 @@ journalForm?.addEventListener('submit', (e) => {
 })();
 
 // --- Registrazione vocale ---
-const recordBtn = document.getElementById('recordVoice');
 let mediaRecorder;
 let audioChunks = [];
 let recordingStart = null;
@@ -368,31 +420,4 @@ saveAllBtn?.addEventListener('click', async () => {
   const content = await zip.generateAsync({ type: 'blob' });
   saveAs(content, `elsmy-recordings-${Date.now()}.zip`);
   logEvent('Pacchetto registrazioni scaricato.');
-});
-
-recordBtn?.addEventListener('click', async () => {
-  if (!mediaRecorder) await initRecorder();
-
-  if (!mediaRecorder) return;
-
-  if (mediaRecorder.state === 'inactive') {
-    audioChunks = [];
-    mediaRecorder.start();
-    recordBtn.classList.add('recording');
-    recordingStart = Date.now();
-    // start timer
-    recordBtn.dataset.origText = recordBtn.textContent;
-    recordingTimer = setInterval(() => {
-      const elapsed = Math.round((Date.now() - recordingStart) / 1000);
-      recordBtn.textContent = `⏺️ ${formatDuration(elapsed)} — Ferma`;
-    }, 500);
-    logEvent('Registrazione vocale avviata.');
-  } else if (mediaRecorder.state === 'recording') {
-    mediaRecorder.stop();
-    recordBtn.classList.remove('recording');
-    if (recordingTimer) clearInterval(recordingTimer);
-    recordingTimer = null;
-    recordBtn.textContent = '🎙️ Registra voce';
-    logEvent('Registrazione vocale fermata.');
-  }
 });

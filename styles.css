@@ -42,6 +42,13 @@ img { max-width: 100%; }
 .btn-danger { background: #3a0f12; border: 1px solid #ff8c8c; color: #ffd5d5; }
 .btn-ghost { background: transparent; border: 1px solid var(--border); }
 
+/* Unified start/stop button */
+#startSimAndRecord { transition: all 0.3s ease; }
+#startSimAndRecord:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(94, 234, 212, 0.3); }
+#stopSimAndRecord { background: #ff6b6b; border: none; color: #fff; font-weight: 600; transition: all 0.3s ease; }
+#stopSimAndRecord:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3); }
+#stopSimAndRecord.recording { animation: pulseRecord 1.2s infinite; }
+
 .btn-voice {
   background: #20264a;
   border: 1px solid var(--accent);
