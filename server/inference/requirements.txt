@@ -1,0 +1,6 @@
+flask>=2.0
+transformers>=4.30
+torch
+torchaudio
+soundfile
+librosa

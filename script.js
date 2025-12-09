@@ -325,6 +325,31 @@ async function initRecorder() {
         logEvent('Upload fallito (nessun endpoint attivo o errore di rete).');
       }
 
+      // Try inference (Hugging Face / SpeechBrain microservice)
+      try {
+        const form2 = new FormData();
+        form2.append('file', audioBlob, filename);
+        // Adjust URL if your inference service runs on another host/port
+        const inferRes = await fetch('http://localhost:5001/infer', { method: 'POST', body: form2 });
+        if (inferRes.ok) {
+          const inferData = await inferRes.json().catch(() => ({}));
+          if (inferData && inferData.results) {
+            recObj.inference = inferData.results; // store results on the recording
+            renderRecordings();
+            // update live emotion level with top result
+            if (inferData.results.length > 0) {
+              const top = inferData.results[0];
+              emotionLevelEl.textContent = `Livello emotivo (voice): ${top.label} (${Math.round(top.score*100)}%)`;
+              logEvent('Inference vocale: ' + top.label + ' (' + Math.round(top.score*100) + '%)');
+            }
+          }
+        } else {
+          logEvent('Inference non riuscita: server ha risposto con codice ' + inferRes.status + '.');
+        }
+      } catch (err) {
+        logEvent('Inference fallita (servizio locale non avviato?): ' + err.message);
+      }
+
       // cleanup
       recordingStart = null;
       if (recordingTimer) { clearInterval(recordingTimer); recordingTimer = null; }
@@ -387,6 +412,15 @@ function renderRecordings() {
       serverLink.textContent = 'Salvato';
       serverLink.className = 'btn btn-ghost';
       actions.appendChild(serverLink);
+    }
+    if (r.inference && r.inference.length) {
+      const inf = r.inference[0];
+      const infSpan = document.createElement('span');
+      infSpan.className = 'recording-inference';
+      infSpan.textContent = `${inf.label} (${Math.round(inf.score*100)}%)`;
+      infSpan.style.marginLeft = '8px';
+      infSpan.style.color = 'var(--primary)';
+      actions.appendChild(infSpan);
     }
 
     li.appendChild(actions);
