@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ELSMY – My Emotional Light Security</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta name="description" content="ELSMY è una piattaforma per la sicurezza emotiva: rilevamento stati emotivi, protezione in tempo reale, supporto interattivo e community." />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a href="#" class="logo" aria-label="ELSMY Home">ELSMY</a>
+      <button id="themeToggle" class="btn btn-ghost" aria-label="Cambia tema">🌓</button>
+      <a href="#demo" class="btn btn-primary">Prova la Demo</a>
+    </nav>
+    <section class="hero" role="banner">
+      <div class="hero-content">
+        <h1>My Emotional Light Security</h1>
+        <p class="subtitle">Tecnologia che protegge corpo, mente e cuore, con intelligenza emotiva in tempo reale.</p>
+        <div class="hero-ctas">
+          <a href="#come-funziona" class="btn btn-secondary">Come funziona</a>
+          <a href="#demo" class="btn btn-primary">Avvia la simulazione</a>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="pulse"></div>
+        <div class="grid-scan"></div>
+      </div>
+    </section>
+  </header>
+
+  <main>
+    <section id="panoramica" class="section">
+      <h2>Panoramica del concetto</h2>
+      <p>
+        ELSMY è una piattaforma di sicurezza emotiva. Al centro c’è il Sensore Emotivo di Sicurezza,
+        che analizza segnali biometrici e comportamentali e attiva protocolli di protezione personalizzati,
+        offrendo supporto interattivo e uno spazio community sicuro.
+      </p>
+      <div class="cards">
+        <article class="card">
+          <h3>Rilevamento emotivo</h3>
+          <p>Analisi continua di indicatori come variabilità cardiaca, conduttanza cutanea e pattern comportamentali, per classificare stress, calma, gioia e altro.</p>
+        </article>
+        <article class="card">
+          <h3>Protezione in tempo reale</h3>
+          <p>Quando emerge disagio o potenziale rischio, si attivano alert verso contatti fidati, tracciamento opzionale e interventi calmanti.</p>
+        </article>
+        <article class="card">
+          <h3>Supporto interattivo</h3>
+          <p>Consigli su misura, riflessione guidata e journaling emotivo per aumentare consapevolezza e autonomia.</p>
+        </article>
+        <article class="card">
+          <h3>Community e approfondimenti</h3>
+          <p>Spazio sicuro per monitorare tendenze emotive, accedere a risorse e connettersi con persone che vivono esperienze simili.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="come-funziona" class="section section-alt">
+      <h2>Come funziona</h2>
+      <div class="steps">
+        <div class="step">
+          <span class="step-number">1</span>
+          <h4>Rilevamento</h4>
+          <p>Il sensore invia dati alla piattaforma per valutare lo stato emotivo in tempo quasi reale.</p>
+        </div>
+        <div class="step">
+          <span class="step-number">2</span>
+          <h4>Analisi</h4>
+          <p>Modelli ML classificano lo stato (stress, calma, gioia, ecc.) e stimano trend.</p>
+        </div>
+        <div class="step">
+          <span class="step-number">3</span>
+          <h4>Protezione</h4>
+          <p>Se viene rilevato disagio, si attivano protocolli: alert ai contatti, safe mode, risorse.</p>
+        </div>
+        <div class="step">
+          <span class="step-number">4</span>
+          <h4>Supporto</h4>
+          <p>L’utente riceve feedback, consigli e strumenti per riprendere equilibrio.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo" class="section demo">
+      <h2>Demo interattiva del sensore</h2>
+      <p>Questa simulazione genera dati fittizi per mostrare analisi emotiva, alert e supporto.</p>
+      <div class="demo-grid">
+        <div class="panel">
+          <h3>Sensore simulato</h3>
+          <div class="sensor-readings">
+            <div class="reading">
+              <span class="label">HRV</span>
+              <span id="hrv" class="value">—</span>
+            </div>
+            <div class="reading">
+              <span class="label">GSR</span>
+              <span id="gsr" class="value">—</span>
+            </div>
+            <div class="reading">
+              <span class="label">Temp</span>
+              <span id="temp" class="value">—</span>
+            </div>
+          </div>
+          <div class="controls">
+            <button id="startSim" class="btn btn-primary">Avvia simulazione</button>
+            <button id="stopSim" class="btn btn-secondary">Ferma</button>
+            <button id="safeMode" class="btn btn-danger">Safe mode</button>
+          </div>
+          <p class="note">I dati sono di esempio e non sostituiscono valutazioni professionali.</p>
+        </div>
+
+        <div class="panel">
+          <h3>Stato emotivo</h3>
+          <div class="state-badge" id="emotionState">In attesa</div>
+          <div class="state-meter">
+            <div class="bar"><span>Stress</span><div id="stressBar" class="fill"></div></div>
+            <div class="bar"><span>Calma</span><div id="calmBar" class="fill"></div></div>
+            <div class="bar"><span>Gioia</span><div id="joyBar" class="fill"></div></div>
+          </div>
+          <div class="advice" id="adviceBox">Avvia la simulazione per ricevere consigli.</div>
+        </div>
+
+        <div class="panel">
+          <h3>Alert e log eventi</h3>
+          <ul id="eventLog" class="event-log" aria-live="polite" aria-atomic="false"></ul>
+        </div>
+
+        <div class="panel">
+          <h3>Journaling emotivo</h3>
+          <form id="journalForm" class="journal-form">
+            <label for="journalText">Scrivi come ti senti (opzionale):</label>
+            <textarea id="journalText" rows="4" placeholder="Esempio: mi sento agitata, prendo una pausa di 5 minuti."></textarea>
+            <button type="submit" class="btn btn-secondary">Salva nota</button>
+          </form>
+          <div>
+            <h4>Note recenti</h4>
+            <ul id="journalList" class="journal-list"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="community" class="section section-alt">
+      <h2>Community e risorse</h2>
+      <div class="cards">
+        <article class="card">
+          <h3>Spazio sicuro</h3>
+          <p>Linee guida chiare, moderazione e rispetto reciproco per una condivisione consapevole.</p>
+        </article>
+        <article class="card">
+          <h3>Risorse</h3>
+          <p>Articoli e strumenti per la consapevolezza emotiva, respirazione, pause e routine.</p>
+        </article>
+        <article class="card">
+          <h3>Trend (demo)</h3>
+          <p>Panoramica anonima dei trend emotivi per comprendere pattern e agire con cura.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="missione" class="section">
+      <h2>Missione</h2>
+      <p>Creare un mondo in cui la consapevolezza emotiva sia una forma di sicurezza—dove la tecnologia protegga non solo il corpo, ma anche la mente e il cuore.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div>
+        <strong>ELSMY</strong><br/>
+        My Emotional Light Security
+      </div>
+      <div>
+        <strong>Contatti</strong><br/>
+        hello@elsmy.example
+      </div>
+      <div>
+        <strong>Nota</strong><br/>
+        Questa è una demo concettuale. Le funzionalità mostrate simulano flussi e non rappresentano consigli clinici.
+      </div>
+    </div>
+    <div class="footer-bottom">
+      © 2025 ELSMY. Tutti i diritti riservati.
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
