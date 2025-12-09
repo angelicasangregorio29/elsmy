@@ -22,10 +22,13 @@ const calmBar = document.getElementById('calmBar');
 const joyBar = document.getElementById('joyBar');
 const adviceBox = document.getElementById('adviceBox');
 const eventLog = document.getElementById('eventLog');
+const emotionLevelEl = document.getElementById('emotionLevel');
+const finalResultEl = document.getElementById('finalResult');
 
 const startSimAndRecordBtn = document.getElementById('startSimAndRecord');
 const stopSimAndRecordBtn = document.getElementById('stopSimAndRecord');
 const safeModeBtn = document.getElementById('safeMode');
+const recordVoiceBtn = document.getElementById('recordVoice');
 
 function logEvent(message) {
   const li = document.createElement('li');
@@ -103,12 +106,16 @@ function startSimulation() {
   isSimulationRunning = true;
   emotionalHistory = [];
   simStartTime = Date.now();
+  finalResultEl.textContent = 'Risultato finale: —';
   logEvent('Simulazione avviata.');
   simInterval = setInterval(() => {
     const sensor = generateSensorData();
     const emotion = estimateEmotion(sensor);
     updateUI(sensor, emotion);
     maybeTriggerAlerts(emotion);
+    
+    // Update emotion level display
+    emotionLevelEl.textContent = `Livello emotivo: ${emotion.label} (Stress: ${emotion.stress}% | Calma: ${emotion.calm}% | Gioia: ${emotion.joy}%)`;
     
     // Store emotional state in history
     emotionalHistory.push({
@@ -131,8 +138,10 @@ function stopSimulation() {
   if (emotionalHistory.length > 0) {
     const summary = generateEmotionalSummary();
     logEvent(`<strong>Riepilogo simulazione:</strong> ${summary}`);
+    finalResultEl.textContent = `Risultato finale: ${summary}`;
   }
   
+  emotionLevelEl.textContent = 'Livello emotivo: —';
   logEvent('Simulazione fermata.');
 }
 
@@ -462,4 +471,30 @@ saveAllBtn?.addEventListener('click', async () => {
   const content = await zip.generateAsync({ type: 'blob' });
   saveAs(content, `elsmy-recordings-${Date.now()}.zip`);
   logEvent('Pacchetto registrazioni scaricato.');
+});
+
+// Standalone voice record button
+recordVoiceBtn?.addEventListener('click', async () => {
+  if (!mediaRecorder) await initRecorder();
+
+  if (!mediaRecorder) return;
+
+  if (mediaRecorder.state === 'inactive') {
+    audioChunks = [];
+    mediaRecorder.start();
+    recordVoiceBtn.classList.add('recording');
+    recordingStart = Date.now();
+    recordingTimer = setInterval(() => {
+      const elapsed = Math.round((Date.now() - recordingStart) / 1000);
+      recordVoiceBtn.textContent = `⏹️ ${formatDuration(elapsed)} — Ferma`;
+    }, 500);
+    logEvent('Registrazione vocale avviata.');
+  } else if (mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    recordVoiceBtn.classList.remove('recording');
+    if (recordingTimer) clearInterval(recordingTimer);
+    recordingTimer = null;
+    recordVoiceBtn.textContent = '🎙️ Registra voce';
+    logEvent('Registrazione vocale fermata.');
+  }
 });
