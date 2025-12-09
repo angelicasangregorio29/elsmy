@@ -119,3 +119,20 @@ img { max-width: 100%; }
   .hero { grid-template-columns: 1fr; }
   .hero-visual { min-height: 160px; margin-top: 16px; }
 }
+
+/* Recordings panel styles */
+.recordings-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.recordings-note { margin-left: 8px; }
+.recording-item { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.recording-item audio { max-width: 240px; }
+.recording-meta { color: var(--muted); font-size: 12px; margin-left: 8px; }
+
+/* Modal styles */
+.modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.modal.hidden { display: none; }
+.modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); }
+.modal-content { position: relative; z-index: 10000; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+.modal-content h3 { margin-top: 0; margin-bottom: 12px; }
+.modal-content p { color: var(--muted); margin-bottom: 16px; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.modal-actions .btn { padding: 8px 16px; font-size: 14px; }

@@ -1,0 +1,8 @@
+runtime: nodejs
+env: standard
+
+entrypoint: server/index.js
+
+env_variables:
+  NODE_ENV: "production"
+  PORT: "8080"

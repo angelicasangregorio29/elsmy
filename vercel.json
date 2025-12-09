@@ -1,0 +1,18 @@
+{
+  "rewrites": [
+    {
+      "source": "/upload",
+      "destination": "/api/upload.js"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "/uploads/:path*"
+    }
+  ],
+  "functions": {
+    "api/upload.js": {
+      "memory": 512,
+      "maxDuration": 60
+    }
+  }
+}
