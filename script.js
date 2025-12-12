@@ -38,13 +38,40 @@ function logEvent(message) {
   eventLog.prepend(li);
 }
 
-// Generazione dati fake
-function generateSensorData() {
-  // Intervalli fittizi
-  const hrv = Math.round(40 + Math.random() * 60);     // ms
-  const gsr = +(0.5 + Math.random() * 4.5).toFixed(2); // uS
-  const temp = +(35.8 + Math.random() * 2.0).toFixed(1); // °C
-  return { hrv, gsr, temp };
+// --- Integrazione API Esterna (OpenWeatherMap) ---
+
+// Inserisci qui la tua chiave API gratuita da OpenWeatherMap
+const WEATHER_API_KEY = 'LA_TUA_CHIAVE_API_QUI'; 
+const CITY = 'Rome,IT'; // Puoi cambiare città
+let lastWeatherData = null;
+
+async function fetchWeatherData() {
+  if (!WEATHER_API_KEY || WEATHER_API_KEY === 'LA_TUA_CHIAVE_API_QUI') {
+    console.warn('Chiave API per OpenWeatherMap non impostata. Uso dati di fallback.');
+    logEvent('Avviso: API meteo non configurata. Dati meteo simulati.');
+    // Dati di fallback se la chiave non è presente
+    return { temp: 22 + (Math.random() - 0.5) * 5 };
+  }
+
+  try {
+    const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${CITY}&appid=${WEATHER_API_KEY}&units=metric`);
+    if (!response.ok) throw new Error(`API ha risposto con stato ${response.status}`);
+    const data = await response.json();
+    lastWeatherData = { temp: data.main.temp };
+    logEvent(`Dati meteo per ${data.name} aggiornati: ${data.main.temp.toFixed(1)}°C`);
+    return lastWeatherData;
+  } catch (error) {
+    logEvent(`Errore API meteo: ${error.message}. Uso dati di fallback.`);
+    return { temp: 22 + (Math.random() - 0.5) * 5 }; // Fallback in caso di errore
+  }
+}
+
+// Generazione dati biometrici "ancorata" alla temperatura esterna
+function generateAnchoredSensorData(weatherData) {
+  const externalTemp = weatherData.temp;
+  const hrv = Math.round(50 + Math.random() * 40 - (Math.abs(externalTemp - 22) * 1.5)); // HRV diminuisce con temperature "scomode"
+  const gsr = +(1.0 + Math.random() * 2.5 + (Math.abs(externalTemp - 22) * 0.1)).toFixed(2); // GSR aumenta con temperature "scomode"
+  return { hrv, gsr, temp: externalTemp };
 }
 
 // Stima stato emotivo semplice
@@ -109,8 +136,11 @@ function startSimulation() {
   simState.startTime = Date.now();
   finalResultEl.textContent = 'Risultato finale: —';
   logEvent('Simulazione avviata.');
-  simState.intervalId = setInterval(() => {
-    const sensor = generateSensorData();
+
+  // Esegui la simulazione
+  const runSimulationTick = async () => {
+    const weatherData = lastWeatherData || await fetchWeatherData();
+    const sensor = generateAnchoredSensorData(weatherData);
     const emotion = estimateEmotion(sensor);
     updateUI(sensor, emotion);
     maybeTriggerAlerts(emotion);
@@ -126,7 +156,12 @@ function startSimulation() {
       calm: emotion.calm,
       joy: emotion.joy
     });
-  }, 1200);
+  };
+
+  // Esegui subito il primo tick e poi imposta l'intervallo
+  runSimulationTick();
+  simState.intervalId = setInterval(runSimulationTick, 2000); // Rallentiamo un po' per non superare i limiti dell'API
+  setInterval(fetchWeatherData, 60000 * 5); // Aggiorna il meteo ogni 5 minuti
 }
 
 function stopSimulation() {
