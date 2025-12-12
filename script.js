@@ -6,11 +6,12 @@ themeToggle?.addEventListener('click', () => {
 });
 
 // Stato simulazione
-let simInterval = null;
-let isSimulationRunning = false;
-let isRecordingRunning = false;
-let emotionalHistory = [];
-let simStartTime = null;
+const simState = {
+  intervalId: null,
+  isRunning: false,
+  history: [],
+  startTime: null,
+};
 
 const hrvEl = document.getElementById('hrv');
 const gsrEl = document.getElementById('gsr');
@@ -102,13 +103,13 @@ function maybeTriggerAlerts(emotion) {
 }
 
 function startSimulation() {
-  if (simInterval) return;
-  isSimulationRunning = true;
-  emotionalHistory = [];
-  simStartTime = Date.now();
+  if (simState.intervalId) return;
+  simState.isRunning = true;
+  simState.history = [];
+  simState.startTime = Date.now();
   finalResultEl.textContent = 'Risultato finale: —';
   logEvent('Simulazione avviata.');
-  simInterval = setInterval(() => {
+  simState.intervalId = setInterval(() => {
     const sensor = generateSensorData();
     const emotion = estimateEmotion(sensor);
     updateUI(sensor, emotion);
@@ -118,8 +119,8 @@ function startSimulation() {
     emotionLevelEl.textContent = `Livello emotivo: ${emotion.label} (Stress: ${emotion.stress}% | Calma: ${emotion.calm}% | Gioia: ${emotion.joy}%)`;
     
     // Store emotional state in history
-    emotionalHistory.push({
-      timestamp: Date.now() - simStartTime,
+    simState.history.push({
+      timestamp: Date.now() - simState.startTime,
       emotion: emotion.label,
       stress: emotion.stress,
       calm: emotion.calm,
@@ -129,13 +130,13 @@ function startSimulation() {
 }
 
 function stopSimulation() {
-  if (!simInterval) return;
-  clearInterval(simInterval);
-  simInterval = null;
-  isSimulationRunning = false;
+  if (!simState.intervalId) return;
+  clearInterval(simState.intervalId);
+  simState.intervalId = null;
+  simState.isRunning = false;
   
   // Generate and show final summary
-  if (emotionalHistory.length > 0) {
+  if (simState.history.length > 0) {
     const summary = generateEmotionalSummary();
     logEvent(`<strong>Riepilogo simulazione:</strong> ${summary}`);
     finalResultEl.textContent = `Risultato finale: ${summary}`;
@@ -146,14 +147,14 @@ function stopSimulation() {
 }
 
 function generateEmotionalSummary() {
-  if (emotionalHistory.length === 0) return 'Nessun dato disponibile.';
+  if (simState.history.length === 0) return 'Nessun dato disponibile.';
   
-  const avgStress = Math.round(emotionalHistory.reduce((sum, h) => sum + h.stress, 0) / emotionalHistory.length);
-  const avgCalm = Math.round(emotionalHistory.reduce((sum, h) => sum + h.calm, 0) / emotionalHistory.length);
-  const avgJoy = Math.round(emotionalHistory.reduce((sum, h) => sum + h.joy, 0) / emotionalHistory.length);
+  const avgStress = Math.round(simState.history.reduce((sum, h) => sum + h.stress, 0) / simState.history.length);
+  const avgCalm = Math.round(simState.history.reduce((sum, h) => sum + h.calm, 0) / simState.history.length);
+  const avgJoy = Math.round(simState.history.reduce((sum, h) => sum + h.joy, 0) / simState.history.length);
   
   const emotionCounts = {};
-  emotionalHistory.forEach(h => {
+  simState.history.forEach(h => {
     emotionCounts[h.emotion] = (emotionCounts[h.emotion] || 0) + 1;
   });
   
@@ -161,14 +162,14 @@ function generateEmotionalSummary() {
     emotionCounts[a] > emotionCounts[b] ? a : b
   );
   
-  const duration = emotionalHistory[emotionalHistory.length - 1].timestamp;
+  const duration = simState.history[simState.history.length - 1].timestamp;
   const durationFormatted = formatDuration(Math.round(duration / 1000));
   
   return `Durata: ${durationFormatted} | Stress: ${avgStress}% | Calma: ${avgCalm}% | Gioia: ${avgJoy}% | Stato dominante: ${dominantEmotion}`;
 }
 
 function updateUnifiedButtonUI() {
-  if (isSimulationRunning || isRecordingRunning) {
+  if (simState.isRunning || (mediaRecorder && mediaRecorder.state === 'recording')) {
     startSimAndRecordBtn.style.display = 'none';
     stopSimAndRecordBtn.style.display = 'inline-flex';
   } else {
@@ -188,6 +189,8 @@ function enterSafeMode() {
   joyBar.style.width = '40%';
 }
 
+let isRecordingWithSim = false; // Flag to distinguish unified vs standalone recording
+
 startSimAndRecordBtn?.addEventListener('click', async () => {
   if (!mediaRecorder) await initRecorder();
   
@@ -198,7 +201,7 @@ startSimAndRecordBtn?.addEventListener('click', async () => {
   if (mediaRecorder && mediaRecorder.state === 'inactive') {
     audioChunks = [];
     mediaRecorder.start();
-    isRecordingRunning = true;
+    isRecordingWithSim = true;
     recordingStart = Date.now();
     stopSimAndRecordBtn.classList.add('recording');
     recordingTimer = setInterval(() => {
@@ -218,7 +221,7 @@ stopSimAndRecordBtn?.addEventListener('click', () => {
   // Ferma registrazione
   if (mediaRecorder && mediaRecorder.state === 'recording') {
     mediaRecorder.stop();
-    isRecordingRunning = false;
+    isRecordingWithSim = false;
     stopSimAndRecordBtn.classList.remove('recording');
     if (recordingTimer) clearInterval(recordingTimer);
     recordingTimer = null;
@@ -309,17 +312,16 @@ async function initRecorder() {
         const form = new FormData();
         form.append('file', audioBlob, filename);
         const res = await fetch('/upload', { method: 'POST', body: form });
-        if (res.ok) {
-          const data = await res.json().catch(() => ({}));
-          if (data && data.url) {
-            recObj.serverUrl = data.url;
-            renderRecordings();
-            logEvent('Registrazione salvata sul server: ' + data.url);
-          } else {
-            logEvent('Registrazione salvata sul server.');
-          }
+        if (!res.ok) {
+          throw new Error(`Server responded with ${res.status}`);
+        }
+        const data = await res.json();
+        if (data && data.url) {
+          recObj.serverUrl = data.url;
+          renderRecordings();
+          logEvent('Registrazione salvata sul server: ' + data.url);
         } else {
-          logEvent('Upload non riuscito: server ha risposto con codice ' + res.status + '.');
+          logEvent('Registrazione salvata sul server, ma URL non ricevuto.');
         }
       } catch (err) {
         logEvent('Upload fallito (nessun endpoint attivo o errore di rete).');
@@ -331,23 +333,23 @@ async function initRecorder() {
         form2.append('file', audioBlob, filename);
         // Adjust URL if your inference service runs on another host/port
         const inferRes = await fetch('http://localhost:5001/infer', { method: 'POST', body: form2 });
-        if (inferRes.ok) {
-          const inferData = await inferRes.json().catch(() => ({}));
-          if (inferData && inferData.results) {
-            recObj.inference = inferData.results; // store results on the recording
-            renderRecordings();
-            // update live emotion level with top result
-            if (inferData.results.length > 0) {
-              const top = inferData.results[0];
-              emotionLevelEl.textContent = `Livello emotivo (voice): ${top.label} (${Math.round(top.score*100)}%)`;
-              logEvent('Inference vocale: ' + top.label + ' (' + Math.round(top.score*100) + '%)');
-            }
-          }
-        } else {
-          logEvent('Inference non riuscita: server ha risposto con codice ' + inferRes.status + '.');
+        if (!inferRes.ok) {
+          throw new Error(`Inference server responded with ${inferRes.status}`);
         }
+        const inferData = await inferRes.json();
+        if (inferData && inferData.results && inferData.results.length > 0) {
+          recObj.inference = inferData.results; // store results on the recording
+          renderRecordings();
+          // update live emotion level with top result
+          const top = inferData.results[0];
+          const scorePercent = Math.round(top.score * 100);
+          emotionLevelEl.textContent = `Livello emotivo (voce): ${top.label} (${scorePercent}%)`;
+          logEvent(`Inference vocale: ${top.label} (${scorePercent}%)`);
+        } else {
+          logEvent('Inference completata ma senza risultati validi.');
+          }
       } catch (err) {
-        logEvent('Inference fallita (servizio locale non avviato?): ' + err.message);
+        logEvent(`Inference fallita (servizio non attivo?): ${err.message}`);
       }
 
       // cleanup
@@ -522,12 +524,14 @@ recordVoiceBtn?.addEventListener('click', async () => {
       const elapsed = Math.round((Date.now() - recordingStart) / 1000);
       recordVoiceBtn.textContent = `⏹️ ${formatDuration(elapsed)} — Ferma`;
     }, 500);
+    updateUnifiedButtonUI(); // Hide the main start button
     logEvent('Registrazione vocale avviata.');
   } else if (mediaRecorder.state === 'recording') {
     mediaRecorder.stop();
     recordVoiceBtn.classList.remove('recording');
     if (recordingTimer) clearInterval(recordingTimer);
     recordingTimer = null;
+    updateUnifiedButtonUI(); // Show the main start button again
     recordVoiceBtn.textContent = '🎙️ Registra voce';
     logEvent('Registrazione vocale fermata.');
   }

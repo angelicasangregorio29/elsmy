@@ -35,7 +35,7 @@ img { max-width: 100%; }
   font-weight: 700; font-size: 20px; letter-spacing: 1px; color: var(--text);
 }
 
-.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); color: var(--text); background: var(--bg-alt); cursor: pointer; transition: transform .15s ease, background .15s ease, border .15s ease; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); color: var(--text); background: var(--bg-alt); cursor: pointer; transition: transform .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
 .btn:hover { transform: translateY(-1px); border-color: var(--accent); }
 .btn-primary { background: linear-gradient(90deg, #5eead4, #60a5fa); border: none; color: #081226; font-weight: 700; }
 .btn-secondary { background: #273158; }
