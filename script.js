@@ -8,6 +8,7 @@ themeToggle?.addEventListener('click', () => {
 // Stato simulazione
 const simState = {
   intervalId: null,
+  weatherIntervalId: null,
   isRunning: false,
   history: [],
   startTime: null,
@@ -161,13 +162,17 @@ function startSimulation() {
   // Esegui subito il primo tick e poi imposta l'intervallo
   runSimulationTick();
   simState.intervalId = setInterval(runSimulationTick, 2000); // Rallentiamo un po' per non superare i limiti dell'API
-  setInterval(fetchWeatherData, 60000 * 5); // Aggiorna il meteo ogni 5 minuti
+  simState.weatherIntervalId = setInterval(fetchWeatherData, 60000 * 5); // Aggiorna il meteo ogni 5 minuti
 }
 
 function stopSimulation() {
   if (!simState.intervalId) return;
   clearInterval(simState.intervalId);
   simState.intervalId = null;
+  if (simState.weatherIntervalId) {
+    clearInterval(simState.weatherIntervalId);
+    simState.weatherIntervalId = null;
+  }
   simState.isRunning = false;
   
   // Generate and show final summary
